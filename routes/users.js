@@ -130,6 +130,8 @@ function checkoutNewBranch (res) {
 // 拉去最新代码
 function gitPull (res) {
     var cmdStr = 'git pull';
+    userLogs.push("获取最新代码")
+    adminLogs.push('获取最新代码')
     exec(cmdStr, {cwd: projetPath}, function(err,stdout,stderr){
         if(err) {
             console.log('error:'+stderr);
@@ -138,8 +140,8 @@ function gitPull (res) {
             res.send('over')
         } else {
             console.log("git pull");
-            userLogs.push("获取最新代码")
-            adminLogs.push('获取最新代码：' + stdout)
+            userLogs.push("获取最新代码成功")
+            adminLogs.push('获取最新代码成功：' + stdout)
             buildProject (res)
         }
     });
@@ -147,6 +149,8 @@ function gitPull (res) {
 
 function buildProject (res) {
     console.log('开始项目打包！')
+    userLogs.push("开始项目打包！")
+    adminLogs.push('开始项目打包！')
     var cmdStr = 'npm run build:' + env;
     exec(cmdStr, {cwd: projetPath}, function(err,stdout,stderr){
         if(err) {
