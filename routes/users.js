@@ -254,6 +254,8 @@ function removeDist (res) {
             adminLogs.push('结束时间：' + new Date().format('yyyy-MM-dd hh:mm:ss'))
             userLogs.push('项目部署成功：' + stdout)
             userLogs.push('结束时间：' + new Date().format('yyyy-MM-dd hh:mm:ss'))
+            userLogs.push("over")
+            adminLogs.push("over")
             console.log('结束时间：' + new Date().format('yyyy-MM-dd hh:mm:ss'))
             res.send('over')
             // console.log(data);
