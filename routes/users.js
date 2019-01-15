@@ -71,6 +71,8 @@ function checkoutToMaster (res) {
             console.log('error:'+stderr);
             userLogs.push("部署失败，请联系管理员")
             adminLogs.push('切换至master分支失败：' + stderr)
+            userLogs.push("over")
+            adminLogs.push("over")
             res.send('over')
         } else {
             console.log("切换至master分支");
@@ -101,6 +103,8 @@ function consoleCurrentBranch () {
         if(err) {
             console.log('error:'+stderr);
             adminLogs.push('展示当前分支失败：' + stderr)
+            userLogs.push("over")
+            adminLogs.push("over")
             res.send('over')
         } else {
             console.log("当前分支:" +stdout);
@@ -117,6 +121,8 @@ function checkoutNewBranch (res) {
         if(err) {
             console.log('error:'+stderr);
             adminLogs.push('切换至目标分支失败：' + stderr)
+            userLogs.push("over")
+            adminLogs.push("over")
             res.send('over')
         } else {
             console.log("获取新分支");
@@ -137,6 +143,8 @@ function gitPull (res) {
             console.log('error:'+stderr);
             userLogs.push("获取最新代码失败，请联系管理员")
             adminLogs.push('获取最新代码失败：' + stderr)
+            userLogs.push("over")
+            adminLogs.push("over")
             res.send('over')
         } else {
             console.log("git pull");
@@ -151,12 +159,16 @@ function buildProject (res) {
     console.log('开始项目打包！')
     userLogs.push("开始项目打包！")
     adminLogs.push('开始项目打包！')
+    userLogs.push("打包过程将持续1分钟……！")
+    adminLogs.push("打包过程将持续1分钟……！")
     var cmdStr = 'npm run build:' + env;
     exec(cmdStr, {cwd: projetPath}, function(err,stdout,stderr){
         if(err) {
             console.log('error:'+stderr);
             userLogs.push("项目构建失败，请联系管理员")
             adminLogs.push('项目构建失败：' + stderr)
+            userLogs.push("over")
+            adminLogs.push("over")
             res.send('over')
         } else {
             console.log("项目打包完成");
@@ -175,6 +187,8 @@ function chmodIndex (res) {
         if(err) {
             console.log('error:'+stderr);
             adminLogs.push('index.html赋权失败：' + stderr)
+            userLogs.push("over")
+            adminLogs.push("over")
             res.send('over')
         } else {
             console.log("增加index.html权限完成");
@@ -191,6 +205,8 @@ function chmodStatic (res) {
         if(err) {
             console.log('error:'+stderr);
             adminLogs.push('static赋权失败：' + stderr)
+            userLogs.push("over")
+            adminLogs.push("over")
             res.send('over')
         } else {
             console.log("增加static权限完成");
@@ -208,6 +224,9 @@ function chmodFavicon (res) {
         if(err) {
             console.log('error:'+stderr);
             adminLogs.push('favicon.ico赋权失败：' + stderr)
+            userLogs.push("over")
+            adminLogs.push("over")
+            res.send('over')
         } else {
             console.log("增加favicon.ico权限完成");
             adminLogs.push('favicon.ico赋权成功！：' + stdout)
@@ -226,6 +245,8 @@ function removeDist (res) {
             console.log('error:'+stderr);
             userLogs.push('项目部署失败，请联系管理员！')
             adminLogs.push('转移dist失败：' + stderr)
+            userLogs.push("over")
+            adminLogs.push("over")
             res.send('over')
         } else {
             console.log("转移完成");
