@@ -134,13 +134,13 @@ function checkoutNewBranch (res) {
 }
 
 // 拉去最新代码
-function gitPull (res) {
+function gitPull(res) {
     var cmdStr = 'git pull';
     userLogs.push("获取最新代码")
     adminLogs.push('获取最新代码')
-    exec(cmdStr, {cwd: projetPath}, function(err,stdout,stderr){
-        if(err) {
-            console.log('error:'+stderr);
+    exec(cmdStr, {cwd: projetPath}, function (err, stdout, stderr) {
+        if (err) {
+            console.log('error:' + stderr);
             userLogs.push("获取最新代码失败，请联系管理员")
             adminLogs.push('获取最新代码失败：' + stderr)
             userLogs.push("over")
@@ -150,7 +150,22 @@ function gitPull (res) {
             console.log("git pull");
             userLogs.push("获取最新代码成功")
             adminLogs.push('获取最新代码成功：' + stdout)
-            buildProject (res)
+            if (env.indexOf("/") != -1) {
+                let ip_arr = envIp.split('/')
+                let env_ip = [
+                    {dev: ip_arr[0]},
+                    {sit: ip_arr[1]}
+                ]
+                for (let ip of env_ip) {
+                    mutiBuild(res, 'dev', ip)
+                }
+                userLogs.push("over")
+                adminLogs.push("over")
+                console.log('结束时间：' + new Date().format('yyyy-MM-dd hh:mm:ss'))
+                res.send('over')
+            } else {
+                buildProject(res)
+            }
         }
     });
 }
@@ -174,72 +189,34 @@ function buildProject (res) {
             console.log("项目打包完成");
             userLogs.push("项目构建完成！")
             adminLogs.push('项目构建完成！')
-            chmodIndex (res)
+            chmodDist (res)
         }
     });
 }
 
 
-function chmodIndex (res) {
-    console.log('开始增加index.html权限！')
-    var cmdStr = 'chmod -R 777 index.html';
+function chmodDist (res) {
+    console.log('文件权限！')
+    var cmdStr = 'chmod -R 777 index.html static favicon.ico';
     exec(cmdStr, {cwd: projetPath + '/dist'}, function(err,stdout,stderr){
         if(err) {
             console.log('error:'+stderr);
-            adminLogs.push('index.html赋权失败：' + stderr)
+            adminLogs.push('文件权限失败：' + stderr)
             userLogs.push("over")
             adminLogs.push("over")
             res.send('over')
         } else {
-            console.log("增加index.html权限完成");
-            adminLogs.push('index.html赋权成功：' + stdout)
-            chmodStatic (res)
-        }
-    });
-}
-
-function chmodStatic (res) {
-    console.log('开始增加static权限！')
-    var cmdStr = 'chmod -R 777 static';
-    exec(cmdStr, {cwd: projetPath + '/dist'}, function(err,stdout,stderr){
-        if(err) {
-            console.log('error:'+stderr);
-            adminLogs.push('static赋权失败：' + stderr)
-            userLogs.push("over")
-            adminLogs.push("over")
-            res.send('over')
-        } else {
-            console.log("增加static权限完成");
-            adminLogs.push('static赋权成功！：' + stdout)
-            // console.log(data);
-            chmodFavicon (res)
-        }
-    });
-}
-
-function chmodFavicon (res) {
-    console.log('开始增加favicon.ico权限！')
-    var cmdStr = 'chmod -R 777 favicon.ico';
-    exec(cmdStr, {cwd: projetPath + '/dist'}, function(err,stdout,stderr){
-        if(err) {
-            console.log('error:'+stderr);
-            adminLogs.push('favicon.ico赋权失败：' + stderr)
-            userLogs.push("over")
-            adminLogs.push("over")
-            res.send('over')
-        } else {
-            console.log("增加favicon.ico权限完成");
-            adminLogs.push('favicon.ico赋权成功！：' + stdout)
-            // console.log(data);
-            removeDist (res)
+            console.log("文件权限完成！");
+            adminLogs.push('文件权限成功！')
+            moveDist (res)
         }
     });
 }
 
 
-function removeDist (res) {
+function moveDist (res) {
     console.log('开始转移dist！')
-    var cmdStr = 'rsync -avPp dist/*   ' + envIp + ':/tmp/html/';
+    var cmdStr = 'rsync -avPp dist/*   ' + envIp + ':/var/www/html/';
     exec(cmdStr, {cwd: projetPath}, function(err,stdout,stderr){
         if(err) {
             console.log('error:'+stderr);
@@ -252,7 +229,7 @@ function removeDist (res) {
             console.log("转移完成");
             adminLogs.push('转移dist成功！')
             adminLogs.push('结束时间：' + new Date().format('yyyy-MM-dd hh:mm:ss'))
-            userLogs.push('项目部署成功：' + stdout)
+            userLogs.push('项目部署成功!')
             userLogs.push('结束时间：' + new Date().format('yyyy-MM-dd hh:mm:ss'))
             userLogs.push("over")
             adminLogs.push("over")
@@ -285,5 +262,67 @@ Date.prototype.format = function(fmt) {
     return fmt
 }
 
+function mutiBuild (res, env, ip) {
+    console.log('开始' + env + '环境打包！')
+    userLogs.push('开始' + env + '环境打包！')
+    adminLogs.push('开始' + env + '环境打包！')
+    userLogs.push("打包过程将持续1分钟……！")
+    adminLogs.push("打包过程将持续1分钟……！")
+    var cmdStr = 'npm run build:' + env;
+    exec(cmdStr, {cwd: projetPath}, function(err,stdout,stderr){
+        if(err) {
+            console.log('error:'+stderr);
+            userLogs.push("项目构建失败，请联系管理员")
+            adminLogs.push('项目构建失败：' + stderr)
+            userLogs.push("over")
+            adminLogs.push("over")
+            res.send('over')
+        } else {
+            console.log(env + '环境打包完成！');
+            userLogs.push(env + '环境打包完成！');
+            adminLogs.push(env + '环境打包完成！');
+            mutiChmodDist (res, env, ip)
+        }
+    });
+}
+
+function mutiChmodDist (res, env, ip) {
+    console.log('文件赋权！')
+    var cmdStr = 'chmod -R 777 index.html static favicon.ico';
+    exec(cmdStr, {cwd: projetPath + '/dist'}, function(err,stdout,stderr){
+        if(err) {
+            console.log('error:'+stderr);
+            adminLogs.push(env + '环境赋权失败：' + stderr);
+            userLogs.push("over")
+            adminLogs.push("over")
+            res.send('over')
+        } else {
+            console.log("文件赋权完成！");
+            adminLogs.push(env + '环境赋权完成')
+            mutiMoveDist (res, env, ip)
+        }
+    });
+}
+
+function mutiMoveDist (res, env, ip) {
+    console.log(env + '环境开始部署')
+    var cmdStr = 'rsync -avPp dist/*   ' + ip + ':/tmp/html/';
+    exec(cmdStr, {cwd: projetPath}, function(err,stdout,stderr){
+        if(err) {
+            console.log('error:'+stderr);
+            userLogs.push(env + '环境开始部署失败，请联系管理员！')
+            adminLogs.push(env + '环境开始部署失败：' + 'stderr')
+            userLogs.push("over")
+            adminLogs.push("over")
+            res.send('over')
+        } else {
+            console.log("转移完成");
+            adminLogs.push(env + '环境开始部署成功！')
+            adminLogs.push('结束时间：' + new Date().format('yyyy-MM-dd hh:mm:ss'))
+            userLogs.push(env + '环境开始部署成功！')
+            userLogs.push('结束时间：' + new Date().format('yyyy-MM-dd hh:mm:ss'))
+        }
+    });
+}
 
 module.exports = router;
