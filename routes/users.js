@@ -1,4 +1,5 @@
 var express = require('express');
+var fs = require("fs");
 var router = express.Router();
 // var router = express()
 var exec = require('child_process').exec;
@@ -23,6 +24,9 @@ var userLogs = []
 // 管理员查看日志
 var adminLogs = []
 
+// 缓存多环境部署信息
+var ip_arr = []
+var envCount = 0
 var allowCrossDomain = function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
@@ -36,8 +40,14 @@ router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
 
-router.post('/post', function(req, res, next) {
-    res.send('xxxxxxxxxxxx');
+router.get('/modifyFile', function(req, res, next) {
+    fs.readFile( __dirname +  "/exportJS.js","utf-8",function(err,data){
+        if(err){
+            console.log(err);
+        }else{
+            console.log(data);
+        }
+    });
 });
 // 多请求不影响接口调用
 router.get('/deploy', function(req, res, next) {
@@ -150,19 +160,8 @@ function gitPull(res) {
             console.log("git pull");
             userLogs.push("获取最新代码成功")
             adminLogs.push('获取最新代码成功：' + stdout)
-            if (env.indexOf("/") != -1) {
-                let ip_arr = envIp.split('/')
-                let env_ip = [
-                    {dev: ip_arr[0]},
-                    {sit: ip_arr[1]}
-                ]
-                for (let ip of env_ip) {
-                    mutiBuild(res, 'dev', ip)
-                }
-                userLogs.push("over")
-                adminLogs.push("over")
-                console.log('结束时间：' + new Date().format('yyyy-MM-dd hh:mm:ss'))
-                res.send('over')
+            if (env.indexOf("_") != -1) {
+                multiDeploy(res)
             } else {
                 buildProject(res)
             }
@@ -216,7 +215,7 @@ function chmodDist (res) {
 
 function moveDist (res) {
     console.log('开始转移dist！')
-    var cmdStr = 'rsync -avPp dist/*   ' + envIp + ':/var/www/html/';
+    var cmdStr = 'scp -r  dist/*   rhlog@' + envIp + ':/var/www/html/';
     exec(cmdStr, {cwd: projetPath}, function(err,stdout,stderr){
         if(err) {
             console.log('error:'+stderr);
@@ -262,7 +261,19 @@ Date.prototype.format = function(fmt) {
     return fmt
 }
 
+function multiDeploy (res) {
+    ip_arr = envIp.split('/')
+    mutiBuild(res, 'dev', ip_arr[0])
+}
+
 function mutiBuild (res, env, ip) {
+    console.log(envCount)
+    if (envCount >= 1) {
+        console.log(1234567)
+        envCount = 0
+        userLogs.push("over")
+        adminLogs.push("over")
+    }
     console.log('开始' + env + '环境打包！')
     userLogs.push('开始' + env + '环境打包！')
     adminLogs.push('开始' + env + '环境打包！')
@@ -306,7 +317,7 @@ function mutiChmodDist (res, env, ip) {
 
 function mutiMoveDist (res, env, ip) {
     console.log(env + '环境开始部署')
-    var cmdStr = 'rsync -avPp dist/*   ' + ip + ':/tmp/html/';
+    var cmdStr = 'rsync -avPp dist/*   ' + ip + ':/var/www/html/';
     exec(cmdStr, {cwd: projetPath}, function(err,stdout,stderr){
         if(err) {
             console.log('error:'+stderr);
@@ -321,6 +332,8 @@ function mutiMoveDist (res, env, ip) {
             adminLogs.push('结束时间：' + new Date().format('yyyy-MM-dd hh:mm:ss'))
             userLogs.push(env + '环境开始部署成功！')
             userLogs.push('结束时间：' + new Date().format('yyyy-MM-dd hh:mm:ss'))
+            envCount++
+            mutiBuild(res, 'sit', ip_arr[1])
         }
     });
 }
