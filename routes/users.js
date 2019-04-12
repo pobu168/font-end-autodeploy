@@ -63,7 +63,7 @@ router.get('/deploy', function(req, res, next) {
     envIp = arg.envIp;
     userLogs.push('部署参数：' + JSON.stringify(arg))
     adminLogs.push('部署参数：' + JSON.stringify(arg))
-    checkoutToMaster(res);//调用普通函数fun1
+    gitStash(res);//调用普通函数fun1
 });
 
 router.get('/loadUserLogs', function(req, res, next) {
@@ -73,6 +73,18 @@ router.get('/loadAdminLogs', function(req, res, next) {
     res.send(adminLogs)
 });
 
+// 本函数用来解决切换分支过程中，因分支冲突造成切换失败问题
+function gitStash(res) {
+    var cmdStr = 'git stash';
+    exec(cmdStr, {cwd: projetPath}, function(err,stdout,stderr){
+        if(err) {
+            console.log('error:'+stderr);
+            res.send('over')
+        } else {
+            checkoutToMaster(res);//调用普通函数fun1
+        }
+    });
+}
 
 function checkoutToMaster (res) {
     var cmdStr = 'git checkout master';
@@ -97,11 +109,26 @@ function deleteCurrentBranch (res) {
     exec(cmdStr, {cwd: projetPath}, function(err,stdout,stderr){
         if(err) {
             console.log('error:'+stderr);
+            fixDeleteBug(res)
             adminLogs.push('删除当前分支失败：' + stderr)
-            checkoutNewBranch (res)
+            // checkoutNewBranch (res)
         } else {
             console.log("删除当前分支");
             adminLogs.push('删除当前分支')
+            checkoutNewBranch (res)
+        }
+    });
+}
+
+function fixDeleteBug(res) {
+    var cmdStr = 'git branch -r | grep -v \'\\->\' | while read remote; do git branch --track "${remote#origin/}" "$remote"; done\n' +
+        'git fetch --all\n' +
+        'git pull --all';
+    exec(cmdStr, {cwd: projetPath}, function(err,stdout,stderr){
+        if(err) {
+            console.log('error:'+stderr);
+            res.send('over')
+        } else {
             checkoutNewBranch (res)
         }
     });
