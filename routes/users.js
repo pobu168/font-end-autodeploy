@@ -115,7 +115,7 @@ function consoleCurrentBranch () {
 
 
 function checkoutNewBranch (res) {
-    // var cmdStr = 'git checkout -B features-autoDeploy-20181027 origin/features-autoDeploy-20181027';
+    // var cmdStr = 'git checkout -B 100.100.100.100 100.100.100.100';
     var cmdStr = 'git checkout -B ' + branchName + ' origin/' + branchName;
     exec(cmdStr, {cwd: projetPath}, function(err,stdout,stderr){
         if(err) {
